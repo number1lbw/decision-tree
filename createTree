@@ -1,0 +1,43 @@
+def createTree(dataSet,labels,data_full,labels_full,test_data,mode="unpro"):
+    classList=[example[-1] for example in dataSet]
+    if classList.count(classList[0])==len(classList):  #当前节点包含的样本全部属于同一类别
+        return classList[0]
+    if len(dataSet[0])==1:                             #当前属性集为空
+        return majorityCnt(classList)
+    #平凡情况，每次找到最佳划分的特征
+    labels_copy = copy.deepcopy(labels)
+    bestFeat=chooseBestFeatureToSplit(dataSet,labels)
+    bestFeatLabel=labels[bestFeat]
+    if mode=="unpro" or mode=="post":
+        myTree = {bestFeatLabel: {}}
+    elif mode=="prev":
+        if testing_feat(bestFeatLabel,dataSet,test_data,labels_copy)<testingMajor(majorityCnt(classList), test_data):
+            myTree = {bestFeatLabel: {}}
+        else:
+            return majorityCnt(classList)
+
+    featValues=[example[bestFeat] for example in dataSet]
+    uniqueVals = set(featValues)
+    if type(dataSet[0][bestFeat]).__name__ == 'unicode':
+
+        currentlabel = labels_full.index(labels[bestFeat])
+        featValuesFull = [example[currentlabel] for example in data_full]
+        uniqueValsFull = set(featValuesFull)
+
+    del(labels[bestFeat])
+    for value in uniqueVals:
+        subLabels = labels[:]
+        if type(dataSet[0][bestFeat]).__name__ == 'unicode':
+            uniqueValsFull.remove(value)
+
+        myTree[bestFeatLabel][value] = createTree(splitDataSet \
+                            (dataSet, bestFeat, value), subLabels, data_full, labels_full,splitDataSet \
+                            (test_data, bestFeat, value),mode=mode)
+    if type(dataSet[0][bestFeat]).__name__ == 'unicode':
+        for value in uniqueValsFull:
+            myTree[bestFeatLabel][value] = majorityCnt(classList)
+
+    if mode=="post":
+        if testing(myTree, test_data, labels_copy) > testingMajor(majorityCnt(classList), test_data):
+            return majorityCnt(classList)
+    return myTree
