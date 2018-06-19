@@ -1,0 +1,10 @@
+def splitContinuousDataSet(dataSet, axis, value, direction):
+    retDataSet = []
+    for featVec in dataSet:
+        if direction == 0:
+            if featVec[axis] > value:
+                retDataSet.append(featVec)
+        else:
+            if featVec[axis] <= value:
+                retDataSet.append(featVec)
+    return retDataSet
