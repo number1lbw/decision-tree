@@ -1,0 +1,54 @@
+def chooseBestFeatureToSplit(dataSet, labels):
+    numFeatures = len(dataSet[0]) - 1
+    bestGini = 10000.0
+    bestFeature = -1
+    bestSplitDict = {}
+    for i in range(numFeatures):
+        # 对连续型特征进行处理 ,i代表第i个特征,featList是每次选取一个特征之后这个特征的所有样本对应的数据
+        featList = [example[i] for example in dataSet]
+        # 因为特征分为连续值和离散值特征，对这两种特征需要分开进行处理。
+        if type(featList[0]).__name__ == 'float' or type(featList[0]).__name__ == 'int':
+            # 产生n-1个候选划分点
+            sortfeatList = sorted(featList)
+            splitList = []
+            for j in range(len(sortfeatList) - 1):
+                splitList.append((sortfeatList[j] + sortfeatList[j + 1]) / 2.0)
+            bestSplitGini = 10000
+            # 求用第j个候选划分点划分时，得到的信息熵，并记录最佳划分点
+            for value in splitList:
+                newGini = 0.0
+                subDataSet0 = splitContinuousDataSet(dataSet, i, value, 0)
+                subDataSet1 = splitContinuousDataSet(dataSet, i, value, 1)
+                prob0 = len(subDataSet0) / float(len(dataSet))
+                newGini += prob0 * calcGini(subDataSet0)
+                prob1 = len(subDataSet1) / float(len(dataSet))
+                newGini += prob1 * calcGini(subDataSet1)
+                if newGini < bestSplitGini:
+                    bestSplitGini = newGini
+                    bestSplit = value
+                    # 用字典记录当前特征的最佳划分点
+            bestSplitDict[labels[i]] = bestSplit
+            newGini = bestSplitGini
+        else:
+            uniqueVals = set(featList)
+            newGini = 0.0
+            # 计算该特征下每种划分的信息熵,选取第i个特征的值为value的子集
+            for value in uniqueVals:
+                subDataSet = splitDataSet(dataSet, i, value)
+                prob = len(subDataSet) / float(len(dataSet))
+                newGini += prob * calcGini(subDataSet)
+        if newGini < bestGini:
+            bestGini = newGini
+            bestFeature = i
+
+    # 若当前节点的最佳划分特征为连续特征，则将其以之前记录的划分点为界进行二值化处理
+    # 即是否小于等于bestSplitValue
+    if type(dataSet[0][bestFeature]).__name__ == 'float' or type(dataSet[0][bestFeature]).__name__ == 'int':
+        bestSplitValue = bestSplitDict[labels[bestFeature]]
+        labels[bestFeature] = labels[bestFeature] + '<=' + str(bestSplitValue)
+        for i in range(shape(dataSet)[0]):
+            if dataSet[i][bestFeature] <= bestSplitValue:
+                dataSet[i][bestFeature] = 1
+            else:
+                dataSet[i][bestFeature] = 0
+    return bestFeature
